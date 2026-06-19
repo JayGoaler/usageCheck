@@ -481,11 +481,10 @@ class KindleDashboardTests(unittest.TestCase):
             self.assertNotIn("secondary-row", parent["classes"])
             parent = parent["parent"]
         self.assertRegex(self.css_rule(".card"), r"\bwidth\s*:\s*100%")
-        self.assertRegex(self.css_rule(".secondary-card"), r"\bdisplay\s*:\s*block")
+        self.assertRegex(self.css_rule(".secondary-card"), r"\bdisplay\s*:\s*flex")
         landscape = self.landscape_css()
         secondary = self.css_rule(".secondary-card", landscape)
-        self.assertRegex(secondary, r"\bdisplay\s*:\s*inline-block")
-        self.assertRegex(secondary, r"\bwidth\s*:\s*(?:49|50)(?:\.0+)?%")
+        self.assertRegex(secondary, r"\bflex\s*:\s*1\b")
 
     def test_visuals_are_high_contrast_and_animation_free(self) -> None:
         body = self.css_rule("body")
@@ -496,6 +495,27 @@ class KindleDashboardTests(unittest.TestCase):
             r"@keyframes\b", r"\blinear-gradient\s*\(",
         ):
             self.assertIsNone(re.search(pattern, self.css, re.I), pattern)
+
+    def test_deepseek_currency_is_separate_and_baseline_aligned(self) -> None:
+        for element_id in (
+            "ds-balance",
+            "ds-balance-currency",
+            "ds-monthly-cost",
+            "ds-monthly-currency",
+        ):
+            self.assertIn(element_id, self.elements)
+        money_line = self.css_rule(".money-line")
+        currency = self.css_rule(".currency-unit")
+        self.assertRegex(money_line, r"\balign-items\s*:\s*baseline\b")
+        self.assertRegex(currency, r"\bfont-size\s*:\s*(?:1[4-9]|20)px\b")
+        render = self.function_source("renderDeepSeek")
+        self.assertIn("ds-balance-currency", render)
+        self.assertIn("ds-monthly-currency", render)
+
+    def test_global_status_uses_backend_collection_timestamp(self) -> None:
+        source = self.function_source("fetchDashboard")
+        self.assertIn("data.lastUpdated", source)
+        self.assertNotIn("new Date()", source)
 
     def test_fullscreen_selects_invokes_and_falls_back_visibly(self) -> None:
         source = self.function_source("enterFullscreen")

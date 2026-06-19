@@ -134,7 +134,6 @@ CREATE INDEX idx_history_source_ts ON usage_history(source, timestamp);
 | GET | /api/history/{source} | 指定数据源历史记录 |
 | GET | /api/events | SSE 实时推送端点 |
 | POST | /api/config/interval | 更新采集间隔 |
-| POST | /api/config/keys | 更新 API Keys |
 | POST | /api/collect/now | 手动触发一次采集 |
 
 ## 配置管理
@@ -155,7 +154,7 @@ scheduler:
   interval_minutes: 5
 
 server:
-  host: "0.0.0.0"
+  host: "127.0.0.1"
   port: 8080
 ```
 

@@ -6,7 +6,7 @@ import os
 import re
 import socket
 import subprocess
-from datetime import date
+from datetime import datetime, timezone
 from typing import Any
 
 import websocket  # websocket-client (sync)
@@ -186,12 +186,19 @@ class DeepSeekUsageCollector(BaseCollector):
         """检查今天是否已有月度用量记录。有则返回缓存行列表，无则返回 None。"""
         if self._data_store is None:
             return None
-        today_str = date.today().isoformat()
+        today = datetime.now().astimezone().date()
         latest = await self._data_store.get_latest(source="deepseek")
         for row in latest:
             if row.get("metric") == "monthly_tokens":
                 ts = row.get("timestamp", "")
-                if ts.startswith(today_str):
+                try:
+                    timestamp = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                    if timestamp.tzinfo is None:
+                        timestamp = timestamp.replace(tzinfo=timezone.utc)
+                    cached_date = timestamp.astimezone().date()
+                except (TypeError, ValueError):
+                    continue
+                if cached_date == today:
                     logger.info("Today's monthly usage already cached")
                     return [row]
         return None
@@ -262,8 +269,6 @@ class DeepSeekUsageCollector(BaseCollector):
                     chrome_proc.wait(timeout=5)
                 except subprocess.TimeoutExpired:
                     chrome_proc.kill()
-
-        from datetime import datetime, timezone
 
         now = datetime.now(timezone.utc).isoformat()
         detail = {

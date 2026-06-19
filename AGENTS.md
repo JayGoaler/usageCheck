@@ -64,5 +64,4 @@ python -c "import app; import asyncio; asyncio.run(app.run_collect())"
 | GET | /api/history/{source} | 历史记录 |
 | GET | /api/events | SSE 推送 |
 | POST | /api/config/interval | 更新间隔 |
-| POST | /api/config/keys | 更新 API Keys |
 | POST | /api/collect/now | 手动采集 |

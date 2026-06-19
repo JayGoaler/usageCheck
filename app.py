@@ -157,17 +157,15 @@ def _safe_json(raw: str) -> dict[str, Any]:
 
 
 def _fmt_ts(iso_str: str | None) -> str:
-    """将 ISO 时间戳统一格式化为 yyyy-MM-dd HH:mm:ss"""
+    """将 ISO 时间戳转换为本机时区并格式化。"""
     if not iso_str:
         return ""
     try:
-        # 截取到秒级 (yyyy-MM-ddTHH:mm:ss)
-        ts = iso_str.replace("T", " ").strip()[:19]
-        # 补齐到 19 字符 (yyyy-MM-dd HH:mm:ss)
-        if len(ts) == 16:
-            ts += ":00"
-        return ts
-    except Exception:
+        timestamp = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+        return timestamp.astimezone().strftime("%Y-%m-%d %H:%M:%S")
+    except (TypeError, ValueError):
         return ""
 
 
@@ -180,6 +178,22 @@ def _get_dashboard_response(latest: list[dict[str, Any]]) -> dict[str, Any]:
 
     now = datetime.now(timezone.utc).astimezone()
     now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    latest_timestamp = ""
+    latest_moment: datetime | None = None
+    for row in latest:
+        raw_timestamp = row.get("timestamp")
+        if not raw_timestamp:
+            continue
+        try:
+            moment = datetime.fromisoformat(raw_timestamp.replace("Z", "+00:00"))
+            if moment.tzinfo is None:
+                moment = moment.replace(tzinfo=timezone.utc)
+            moment = moment.astimezone()
+        except (TypeError, ValueError):
+            continue
+        if latest_moment is None or moment > latest_moment:
+            latest_moment = moment
+            latest_timestamp = moment.strftime("%Y-%m-%d %H:%M:%S")
 
     # --- DeepSeek 余额 ---
     deepseek_record = records.get("deepseek:balance", {})
@@ -220,6 +234,7 @@ def _get_dashboard_response(latest: list[dict[str, Any]]) -> dict[str, Any]:
     vpn_detail = _safe_json(vpn_record.get("detail", "{}"))
 
     return {
+        "lastUpdated": latest_timestamp,
         "deepseek": {
             "balance": deepseek_balance,
             "currency": deepseek_detail.get("currency", "CNY"),
@@ -359,18 +374,6 @@ async def collect_now() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/api/config/keys")
-async def update_keys(body: dict[str, Any]) -> dict[str, str]:
-    """更新 API Keys"""
-    if "openai" in body:
-        await data_store.set_config("openai_key", body["openai"])
-        config.setdefault("openai", {})["api_key"] = body["openai"]
-    if "deepseek" in body:
-        await data_store.set_config("deepseek_key", body["deepseek"])
-        config.setdefault("deepseek", {})["api_key"] = body["deepseek"]
-    return {"status": "ok"}
-
-
 @app.post("/api/collect/usage")
 async def collect_usage() -> dict[str, str]:
     """手动触发 DeepSeek 月度用量抓取（跳过当日缓存）"""
@@ -425,7 +428,7 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "app:app",
-        host=config.get("server", {}).get("host", "0.0.0.0"),
+        host=config.get("server", {}).get("host", "127.0.0.1"),
         port=int(config.get("server", {}).get("port", 8080)),
         reload=True,
     )

@@ -6,6 +6,62 @@ from app import _get_dashboard_response
 
 
 class DashboardResponseTests(unittest.TestCase):
+    def test_utc_timestamps_are_displayed_in_local_time(self) -> None:
+        utc_timestamp = "2026-06-19T19:03:47+00:00"
+        expected = (
+            datetime.fromisoformat(utc_timestamp)
+            .astimezone()
+            .strftime("%Y-%m-%d %H:%M:%S")
+        )
+
+        data = _get_dashboard_response(
+            [
+                {
+                    "source": "deepseek",
+                    "metric": "balance",
+                    "value": 12.77,
+                    "unit": "CNY",
+                    "detail": json.dumps({"currency": "CNY"}),
+                    "timestamp": utc_timestamp,
+                }
+            ]
+        )
+
+        self.assertEqual(data["deepseek"]["lastUpdated"], expected)
+        self.assertEqual(data["lastUpdated"], expected)
+
+    def test_global_update_time_uses_latest_collector_write(self) -> None:
+        older = "2026-06-19T18:00:00+00:00"
+        latest = "2026-06-19T19:00:00+00:00"
+
+        data = _get_dashboard_response(
+            [
+                {
+                    "source": "deepseek",
+                    "metric": "balance",
+                    "value": 12.77,
+                    "unit": "CNY",
+                    "detail": "{}",
+                    "timestamp": older,
+                },
+                {
+                    "source": "clash",
+                    "metric": "traffic",
+                    "value": 1,
+                    "unit": "GB",
+                    "detail": "{}",
+                    "timestamp": latest,
+                },
+            ]
+        )
+
+        self.assertEqual(
+            data["lastUpdated"],
+            datetime.fromisoformat(latest)
+            .astimezone()
+            .strftime("%Y-%m-%d %H:%M:%S"),
+        )
+
     def test_response_contains_all_kindle_dashboard_fields(self) -> None:
         latest = [
             {

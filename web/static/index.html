@@ -18,13 +18,14 @@ body {
 }
 .dashboard { width: 100%; padding: 12px; }
 .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   min-height: 58px;
   border-bottom: 3px solid #17191c;
-  overflow: hidden;
 }
-.header h1 { margin: 0; font-size: 28px; }
-.header-sub, .meta, .label { color: #454b52; font-size: 15px; }
-.header-actions { float: right; margin-top: -48px; white-space: nowrap; }
+.header h1 { margin: 0; font-size: 28px; flex: 1; }
+.header-actions { display: flex; gap: 6px; flex-shrink: 0; }
 button {
   min-height: 48px;
   min-width: 76px;
@@ -37,6 +38,29 @@ button {
   font-weight: bold;
 }
 button:disabled { opacity: 0.5; }
+.icon-btn {
+  min-width: 0;
+  width: 42px;
+  height: 42px;
+  min-height: 0;
+  padding: 0;
+  border: 2px solid #17191c;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17191c;
+  font-size: 20px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.icon-btn.small {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  border-radius: 4px;
+}
 .status-message {
   margin-top: 10px;
   padding: 8px 10px;
@@ -55,11 +79,32 @@ button:disabled { opacity: 0.5; }
   background: #ffffff;
 }
 .codex-card { background: #f4f0fb; }
-.deepseek-card { background: #eef4ff; }
-.vpn-card { background: #fff7e8; }
+.deepseek-card { background: #eef4ff; display: flex; flex-direction: column; }
+.vpn-card { background: #fff7e8; display: flex; flex-direction: column; }
 .card-heading { font-size: 19px; font-weight: bold; letter-spacing: .04em; }
+.card-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.card-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 .main-value { margin: 6px 0; font-size: 36px; font-weight: bold; }
 .sub-value { margin: 5px 0; font-size: 24px; font-weight: bold; }
+.money-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.money-line .main-value,
+.money-line .sub-value { margin-right: 0; }
+.currency-unit {
+  color: #454b52;
+  font-size: 18px;
+  font-weight: normal;
+  line-height: 1;
+}
+.data-label { font-size: 15px; color: #454b52; margin-top: 6px; }
 .quota { padding: 10px 0; }
 .quota-secondary { border-top: 2px solid #777; }
 .quota-row, .data-row { overflow: hidden; }
@@ -72,10 +117,8 @@ button:disabled { opacity: 0.5; }
   background: #ffffff;
 }
 .bar-fill { width: 0; height: 100%; background: #17191c; }
-.divider { margin: 10px 0; border-top: 2px solid #777; }
 .error { margin-top: 8px; font-weight: bold; }
 .stale { font-weight: bold; margin-left: 8px; }
-.footer { padding: 8px 0 14px; text-align: center; font-size: 14px; }
 .debug-panel {
   white-space: pre-wrap;
   border: 2px solid #17191c;
@@ -83,20 +126,69 @@ button:disabled { opacity: 0.5; }
   padding: 10px;
   font-size: 13px;
 }
-.secondary-row { width: 100%; }
-.secondary-card { display: block; }
+.secondary-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.secondary-card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* DeepSeek left-right split */
+.ds-split {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+  flex: 1;
+}
+.ds-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.ds-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.ds-right .data-row {
+  margin: 3px 0;
+}
+.ds-right .data-row strong {
+  float: right;
+}
+
+/* VPN two-column */
+.vpn-row {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  align-items: center;
+}
+.vpn-col {
+  flex: 1;
+}
+.vpn-col .label {
+  font-size: 15px;
+  color: #454b52;
+}
 
 @media screen and (orientation: landscape) and (min-width: 700px) {
   .dashboard { padding: 10px 14px; }
   .card { margin-bottom: 8px; padding: 12px; }
-  .secondary-row { font-size: 0; }
-  .secondary-card {
-    display: inline-block;
-    width: 49%;
-    vertical-align: top;
-    font-size: 18px;
+  .secondary-row {
+    flex-direction: row;
+    align-items: stretch;
   }
-  .secondary-card:first-child { margin-right: 2%; }
+  .secondary-card {
+    flex: 1;
+  }
   .codex-card .quota { padding: 7px 0; }
   .main-value { font-size: 32px; }
 }
@@ -107,6 +199,8 @@ button:disabled { opacity: 0.5; }
   .header { min-height: 50px; }
   .header h1 { font-size: 24px; }
   button { min-height: 42px; }
+  .icon-btn { width: 36px; height: 36px; font-size: 18px; }
+  .icon-btn.small { width: 28px; height: 28px; font-size: 14px; }
   .card { padding: 10px; margin-bottom: 7px; }
   .main-value { font-size: 30px; }
   .quota { padding: 6px 0; }
@@ -116,13 +210,10 @@ button:disabled { opacity: 0.5; }
 <body>
 <div class="dashboard">
   <div class="header">
-    <div>
-      <h1>AI 用量仪表盘</h1>
-      <div class="header-sub">Kindle / Desktop</div>
-    </div>
+    <h1>AI 用量仪表盘</h1>
     <div class="header-actions">
-      <button type="button" onclick="enterFullscreen()">全屏</button>
-      <button type="button" onclick="refreshAll()">刷新</button>
+      <button class="icon-btn" type="button" onclick="enterFullscreen()" title="全屏">&#x26F6;</button>
+      <button class="icon-btn" type="button" onclick="refreshAll()" title="刷新">&#x21BB;</button>
     </div>
   </div>
 
@@ -153,51 +244,66 @@ button:disabled { opacity: 0.5; }
         </div>
       </div>
       <div id="codex-unavailable" class="error" style="display:none;">暂无 Codex 数据</div>
-      <div class="meta" id="codex-updated">--</div>
     </div>
 
     <div class="secondary-row">
       <div class="card secondary-card deepseek-card" id="deepseek-card">
-        <div class="card-heading">DEEPSEEK</div>
-        <div class="main-value" id="ds-balance">--</div>
-        <div class="meta" id="ds-updated">--</div>
-        <div class="divider"></div>
-        <div class="label" id="ds-model-label">本月用量</div>
-        <div class="sub-value" id="ds-monthly-tokens">Token --</div>
-        <div class="data-row">
-          <span id="ds-monthly-requests">-- 次请求</span>
-          <strong id="ds-monthly-cost">¥ --</strong>
+        <div class="card-head-row">
+          <span class="card-heading">DEEPSEEK</span>
+          <button class="icon-btn small" type="button" id="btn-usage" onclick="refreshUsage()" title="刷新本月用量">&#x21BB;</button>
         </div>
-        <div class="data-row">
-          <span class="meta" id="ds-monthly-updated">--</span>
-          <button type="button" id="btn-usage" onclick="refreshUsage()">刷新用量</button>
+        <div class="ds-split">
+          <div class="ds-left">
+            <div class="data-label">充值余额</div>
+            <div class="money-line">
+              <div class="main-value" id="ds-balance">--</div>
+              <span class="currency-unit" id="ds-balance-currency">CNY</span>
+            </div>
+            <div class="data-label" id="ds-cost-label">当月消费</div>
+            <div class="money-line">
+              <div class="sub-value" id="ds-monthly-cost">--</div>
+              <span class="currency-unit" id="ds-monthly-currency">CNY</span>
+            </div>
+          </div>
+          <div class="ds-right">
+            <div class="data-label">Token 用量</div>
+            <div class="sub-value" id="ds-monthly-tokens">--</div>
+            <div class="data-row">
+              <span>请求</span>
+              <strong id="ds-monthly-requests">--</strong>
+            </div>
+            <div class="meta" id="ds-monthly-updated">--</div>
+          </div>
         </div>
-        <div id="ds-login-hint" class="error" style="display:none;">
+        <div id="ds-login-hint" class="error" style="display:none; margin-top:4px;">
           请先在主机 Chrome 登录 DeepSeek
         </div>
       </div>
 
       <div class="card secondary-card vpn-card" id="vpn-card">
         <div class="card-heading">网络流量</div>
-        <div class="main-value" id="vpn-remaining">-- GB</div>
-        <div class="label">剩余流量</div>
-        <div class="bar"><div class="bar-fill" id="vpn-bar"></div></div>
-        <div class="data-row">
-          <span>已用</span>
-          <strong id="vpn-used">-- GB</strong>
+        <div class="card-body">
+          <div class="vpn-row">
+            <div class="vpn-col">
+              <div class="main-value" id="vpn-remaining">-- GB</div>
+              <div class="label">剩余流量</div>
+            </div>
+            <div class="vpn-col">
+              <div class="sub-value" id="vpn-used">-- GB</div>
+              <div class="label">已用流量</div>
+            </div>
+          </div>
+          <div class="meta" style="margin-top:8px;">到期 <span id="vpn-expiry">--</span></div>
         </div>
-        <div class="meta">到期 <span id="vpn-expiry">--</span></div>
       </div>
     </div>
   </div>
 
-  <div class="footer" id="footer-ts">尚未成功更新</div>
   <pre id="debug-panel" class="debug-panel" style="display:none;"></pre>
 </div>
 
 <script>
 var pollTimer = null;
-var lastSuccess = '';
 
 function requestJSON(method, url, body, callback) {
   var xhr = new XMLHttpRequest();
@@ -267,6 +373,11 @@ function formatTokens(value) {
   return number ? String(number) : '--';
 }
 
+function formatNumber(value) {
+  var number = asNumber(value, 0);
+  return number.toLocaleString ? number.toLocaleString() : String(number);
+}
+
 function setBar(id, percent) {
   var safePercent = Math.max(0, Math.min(100, asNumber(percent, 0)));
   byId(id).style.width = safePercent + '%';
@@ -284,9 +395,12 @@ function fetchDashboard() {
     renderCodex(data && data.codex);
     renderDeepSeek(data && data.deepseek);
     renderVPN(data && data.vpn);
-    lastSuccess = new Date().toLocaleTimeString();
-    setText('footer-ts', '最近成功更新 ' + lastSuccess);
-    setStatus('数据已更新', 'ok');
+
+    if (data && data.lastUpdated) {
+      setStatus(data.lastUpdated + ' 数据已更新', 'ok');
+    } else {
+      setStatus('数据已更新', 'ok');
+    }
   });
 }
 
@@ -300,7 +414,6 @@ function renderCodex(data) {
     byId('codex-unavailable').style.display = 'block';
     setText('codex-plan', '');
     byId('codex-stale').style.display = 'none';
-    setText('codex-updated', data && data.lastUpdated ? data.lastUpdated : '--');
     return;
   }
   byId('codex-available').style.display = 'block';
@@ -317,45 +430,54 @@ function renderCodex(data) {
   setText('codex-secondary-reset', '重置时间 ' + (secondary.resetTime || '--'));
   setBar('codex-primary-bar', primaryPercent);
   setBar('codex-secondary-bar', secondaryPercent);
-  setText('codex-updated', data.lastUpdated || '--');
 }
 
 function renderDeepSeek(data) {
-  var balance;
-  var hasUsage;
+  var balance, cost, currency, hasUsage, monthLabel, monthTs;
+
   if (!data) {
     setText('ds-balance', '暂无数据');
     return;
   }
   balance = asNumber(data.balance, 0);
+  cost = asNumber(data.monthlyCost, 0);
+  currency = data.currency || 'CNY';
   hasUsage = asNumber(data.monthlyTokens, 0) > 0;
-  setText('ds-balance', '¥ ' + balance.toFixed(2));
-  setText('ds-updated', data.lastUpdated || '--');
-  setText('ds-model-label', '本月 ' + (data.monthlyModel || '用量'));
-  setText('ds-monthly-tokens', 'Token ' + formatTokens(data.monthlyTokens));
-  setText('ds-monthly-requests', asNumber(data.monthlyRequests, 0) + ' 次请求');
-  setText('ds-monthly-cost', '¥ ' + asNumber(data.monthlyCost, 0).toFixed(2));
-  setText('ds-monthly-updated', data.monthlyUpdated || '尚未获取');
+
+  // 从月度更新时间提取月份
+  monthTs = data.monthlyUpdated || '';
+  if (monthTs) {
+    var m = monthTs.match(/(\d{4})-(\d{2})/);
+    monthLabel = m ? (parseInt(m[2], 10) + '月消费') : '当月消费';
+  } else {
+    monthLabel = '当月消费';
+  }
+
+  setText('ds-balance', '￥' + balance.toFixed(2));
+  setText('ds-balance-currency', currency);
+  setText('ds-cost-label', monthLabel);
+  setText('ds-monthly-cost', '￥' + cost.toFixed(2));
+  setText('ds-monthly-currency', currency);
+  setText('ds-monthly-tokens', formatTokens(data.monthlyTokens));
+  setText('ds-monthly-requests', formatNumber(data.monthlyRequests) + ' 次');
+  setText(
+    'ds-monthly-updated',
+    data.monthlyUpdated ? '更新于：' + data.monthlyUpdated : '尚未获取'
+  );
   byId('ds-login-hint').style.display = hasUsage ? 'none' : 'block';
 }
 
 function renderVPN(data) {
-  var used;
-  var total;
-  var remaining;
-  var usedPercent;
+  var used, remaining;
   if (!data) {
     setText('vpn-remaining', '暂无数据');
     return;
   }
   used = asNumber(data.usedBandwidth, 0);
-  total = asNumber(data.totalBandwidth, 0);
   remaining = asNumber(data.remainingBandwidth, 0);
-  usedPercent = total > 0 ? Math.round(used / total * 100) : 0;
-  setText('vpn-used', used.toFixed(1) + ' ' + (data.unit || 'GB'));
   setText('vpn-remaining', remaining.toFixed(1) + ' ' + (data.unit || 'GB'));
+  setText('vpn-used', used.toFixed(1) + ' ' + (data.unit || 'GB'));
   setText('vpn-expiry', data.expiryDate || '--');
-  setBar('vpn-bar', usedPercent);
 }
 
 // ── actions ──
@@ -367,10 +489,8 @@ function refreshAll() {
 function refreshUsage() {
   var button = byId('btn-usage');
   button.disabled = true;
-  setText('btn-usage', '刷新中');
   requestJSON('POST', '/api/collect/usage', {}, function (error, data) {
     button.disabled = false;
-    setText('btn-usage', '刷新用量');
     if (error || !data || data.status !== 'ok') {
       setStatus(
         '用量刷新失败：' + (error ? error.message : data.message || '未知错误'),
