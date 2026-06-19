@@ -1,0 +1,36 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - heading "⚡ AI 用量仪表盘" [level=1] [ref=e4]
+    - button "手动刷新" [ref=e5] [cursor=pointer]
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: DeepSeek
+      - generic [ref=e9]: ¥ 13.70
+      - generic [ref=e10]: 2026-06-19T08:56
+      - generic [ref=e12]: 本月 deepseek-v4-pro
+      - generic [ref=e13]: Token --
+      - generic [ref=e14]:
+        - generic [ref=e15]: 0 次请求
+        - generic [ref=e16]: ¥ 0.00
+      - generic [ref=e17]:
+        - generic [ref=e18]: 尚未获取
+        - button "刷新用量" [ref=e19] [cursor=pointer]
+      - generic [ref=e20]:
+        - generic [ref=e21]: 请先登录 DeepSeek
+        - button "打开登录" [ref=e22] [cursor=pointer]
+    - generic [ref=e23]:
+      - generic [ref=e24]: Codex
+      - generic [ref=e26]:
+        - text: Codex 不可用
+        - text: 请确认已登录 Codex Desktop
+      - generic [ref=e27]: 2026-06-19 17:19
+    - generic [ref=e28]:
+      - generic [ref=e29]: VPN 流量
+      - generic [ref=e30]:
+        - generic [ref=e31]: 已用
+        - generic [ref=e32]: 已用 33.4 GB
+      - generic [ref=e35]:
+        - generic [ref=e36]: 剩余
+        - generic [ref=e37]: 剩余 63.9 GB
+      - generic [ref=e38]: 到期 2026-10-22
+  - generic [ref=e39]: 更新于 17:19:38

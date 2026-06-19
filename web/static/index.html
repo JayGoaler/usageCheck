@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 用量仪表盘</title>
+<style>
+html, body { width: 100%; min-height: 100%; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: #f7f7f4;
+  color: #17191c;
+  font-family: Arial, "Microsoft YaHei", sans-serif;
+  font-size: 18px;
+  line-height: 1.35;
+}
+.dashboard { width: 100%; padding: 12px; }
+.header {
+  min-height: 58px;
+  border-bottom: 3px solid #17191c;
+  overflow: hidden;
+}
+.header h1 { margin: 0; font-size: 28px; }
+.header-sub, .meta, .label { color: #454b52; font-size: 15px; }
+.header-actions { float: right; margin-top: -48px; white-space: nowrap; }
+button {
+  min-height: 48px;
+  min-width: 76px;
+  padding: 8px 12px;
+  border: 2px solid #17191c;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #17191c;
+  font: inherit;
+  font-weight: bold;
+}
+button:disabled { opacity: 0.5; }
+.status-message {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 2px solid #17191c;
+  background: #ffffff;
+}
+.status-message.ok { border-style: dashed; }
+.status-message.error { border-width: 3px; }
+.cards { width: 100%; margin-top: 10px; }
+.card {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 14px;
+  border: 2px solid #17191c;
+  border-radius: 7px;
+  background: #ffffff;
+}
+.codex-card { background: #f4f0fb; }
+.deepseek-card { background: #eef4ff; }
+.vpn-card { background: #fff7e8; }
+.card-heading { font-size: 19px; font-weight: bold; letter-spacing: .04em; }
+.main-value { margin: 6px 0; font-size: 36px; font-weight: bold; }
+.sub-value { margin: 5px 0; font-size: 24px; font-weight: bold; }
+.quota { padding: 10px 0; }
+.quota-secondary { border-top: 2px solid #777; }
+.quota-row, .data-row { overflow: hidden; }
+.quota-row strong:last-child, .data-row strong:last-child { float: right; }
+.bar {
+  width: 100%;
+  height: 18px;
+  margin: 7px 0;
+  border: 2px solid #17191c;
+  background: #ffffff;
+}
+.bar-fill { width: 0; height: 100%; background: #17191c; }
+.divider { margin: 10px 0; border-top: 2px solid #777; }
+.error { margin-top: 8px; font-weight: bold; }
+.stale { font-weight: bold; margin-left: 8px; }
+.footer { padding: 8px 0 14px; text-align: center; font-size: 14px; }
+.debug-panel {
+  white-space: pre-wrap;
+  border: 2px solid #17191c;
+  background: #ffffff;
+  padding: 10px;
+  font-size: 13px;
+}
+.secondary-row { width: 100%; }
+.secondary-card { display: block; }
+
+@media screen and (orientation: landscape) and (min-width: 700px) {
+  .dashboard { padding: 10px 14px; }
+  .card { margin-bottom: 8px; padding: 12px; }
+  .secondary-row { font-size: 0; }
+  .secondary-card {
+    display: inline-block;
+    width: 49%;
+    vertical-align: top;
+    font-size: 18px;
+  }
+  .secondary-card:first-child { margin-right: 2%; }
+  .codex-card .quota { padding: 7px 0; }
+  .main-value { font-size: 32px; }
+}
+
+@media screen and (max-height: 650px) {
+  body { font-size: 16px; }
+  .dashboard { padding-top: 7px; }
+  .header { min-height: 50px; }
+  .header h1 { font-size: 24px; }
+  button { min-height: 42px; }
+  .card { padding: 10px; margin-bottom: 7px; }
+  .main-value { font-size: 30px; }
+  .quota { padding: 6px 0; }
+}
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="header">
+    <div>
+      <h1>AI 用量仪表盘</h1>
+      <div class="header-sub">Kindle / Desktop</div>
+    </div>
+    <div class="header-actions">
+      <button type="button" onclick="enterFullscreen()">全屏</button>
+      <button type="button" onclick="refreshAll()">刷新</button>
+    </div>
+  </div>
+
+  <div id="status-message" class="status-message">正在读取数据…</div>
+  <div id="fullscreen-help" class="status-message help" style="display:none;">
+    当前浏览器不支持网页全屏，请通过 Kindle 浏览器菜单进入全屏或隐藏工具栏。
+  </div>
+
+  <div class="cards">
+    <div class="card codex-card" id="codex-card">
+      <div class="card-heading">CODEX <span id="codex-plan"></span><span class="stale" id="codex-stale" style="display:none;">数据过期</span></div>
+      <div id="codex-available">
+        <div class="quota">
+          <div class="quota-row">
+            <strong>5 小时额度</strong>
+            <strong id="codex-primary-pct">--</strong>
+          </div>
+          <div class="bar"><div class="bar-fill" id="codex-primary-bar"></div></div>
+          <div class="meta" id="codex-primary-reset">重置时间 --</div>
+        </div>
+        <div class="quota quota-secondary">
+          <div class="quota-row">
+            <strong>7 天额度</strong>
+            <strong id="codex-secondary-pct">--</strong>
+          </div>
+          <div class="bar"><div class="bar-fill" id="codex-secondary-bar"></div></div>
+          <div class="meta" id="codex-secondary-reset">重置时间 --</div>
+        </div>
+      </div>
+      <div id="codex-unavailable" class="error" style="display:none;">暂无 Codex 数据</div>
+      <div class="meta" id="codex-updated">--</div>
+    </div>
+
+    <div class="secondary-row">
+      <div class="card secondary-card deepseek-card" id="deepseek-card">
+        <div class="card-heading">DEEPSEEK</div>
+        <div class="main-value" id="ds-balance">--</div>
+        <div class="meta" id="ds-updated">--</div>
+        <div class="divider"></div>
+        <div class="label" id="ds-model-label">本月用量</div>
+        <div class="sub-value" id="ds-monthly-tokens">Token --</div>
+        <div class="data-row">
+          <span id="ds-monthly-requests">-- 次请求</span>
+          <strong id="ds-monthly-cost">¥ --</strong>
+        </div>
+        <div class="data-row">
+          <span class="meta" id="ds-monthly-updated">--</span>
+          <button type="button" id="btn-usage" onclick="refreshUsage()">刷新用量</button>
+        </div>
+        <div id="ds-login-hint" class="error" style="display:none;">
+          请先在主机 Chrome 登录 DeepSeek
+        </div>
+      </div>
+
+      <div class="card secondary-card vpn-card" id="vpn-card">
+        <div class="card-heading">网络流量</div>
+        <div class="main-value" id="vpn-remaining">-- GB</div>
+        <div class="label">剩余流量</div>
+        <div class="bar"><div class="bar-fill" id="vpn-bar"></div></div>
+        <div class="data-row">
+          <span>已用</span>
+          <strong id="vpn-used">-- GB</strong>
+        </div>
+        <div class="meta">到期 <span id="vpn-expiry">--</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer" id="footer-ts">尚未成功更新</div>
+  <pre id="debug-panel" class="debug-panel" style="display:none;"></pre>
+</div>
+
+<script>
+var pollTimer = null;
+var lastSuccess = '';
+
+function requestJSON(method, url, body, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.open(method, url, true);
+  xhr.timeout = 15000;
+  xhr.setRequestHeader('Accept', 'application/json');
+  if (body !== null) {
+    xhr.setRequestHeader('Content-Type', 'application/json');
+  }
+  xhr.onreadystatechange = function () {
+    var data;
+    if (xhr.readyState !== 4) {
+      return;
+    }
+    if (xhr.status < 200 || xhr.status >= 300) {
+      callback(new Error('HTTP ' + xhr.status), null);
+      return;
+    }
+    try {
+      data = JSON.parse(xhr.responseText);
+    } catch (error) {
+      callback(new Error('数据格式错误'), null);
+      return;
+    }
+    callback(null, data);
+  };
+  xhr.onerror = function () {
+    callback(new Error('无法连接服务'), null);
+  };
+  xhr.ontimeout = function () {
+    callback(new Error('请求超时'), null);
+  };
+  xhr.send(body === null ? null : JSON.stringify(body));
+}
+
+function byId(id) {
+  return document.getElementById(id);
+}
+
+function setText(id, value) {
+  var element = byId(id);
+  if (element) {
+    element.innerHTML = '';
+    element.appendChild(document.createTextNode(String(value)));
+  }
+}
+
+function setStatus(message, kind) {
+  var element = byId('status-message');
+  element.className = 'status-message ' + (kind || '');
+  setText('status-message', message);
+}
+
+function asNumber(value, fallback) {
+  var number = Number(value);
+  return isFinite(number) ? number : fallback;
+}
+
+function formatTokens(value) {
+  var number = asNumber(value, 0);
+  if (number >= 1000000) {
+    return (number / 1000000).toFixed(1) + 'M';
+  }
+  if (number >= 1000) {
+    return Math.round(number / 1000) + 'K';
+  }
+  return number ? String(number) : '--';
+}
+
+function setBar(id, percent) {
+  var safePercent = Math.max(0, Math.min(100, asNumber(percent, 0)));
+  byId(id).style.width = safePercent + '%';
+}
+
+// ── data loading ──
+
+function fetchDashboard() {
+  setStatus('正在读取数据…', '');
+  requestJSON('GET', '/api/dashboard', null, function (error, data) {
+    if (error) {
+      setStatus('读取失败：' + error.message, 'error');
+      return;
+    }
+    renderCodex(data && data.codex);
+    renderDeepSeek(data && data.deepseek);
+    renderVPN(data && data.vpn);
+    lastSuccess = new Date().toLocaleTimeString();
+    setText('footer-ts', '最近成功更新 ' + lastSuccess);
+    setStatus('数据已更新', 'ok');
+  });
+}
+
+function renderCodex(data) {
+  var primary;
+  var secondary;
+  var primaryPercent;
+  var secondaryPercent;
+  if (!data || !data.available) {
+    byId('codex-available').style.display = 'none';
+    byId('codex-unavailable').style.display = 'block';
+    setText('codex-plan', '');
+    byId('codex-stale').style.display = 'none';
+    setText('codex-updated', data && data.lastUpdated ? data.lastUpdated : '--');
+    return;
+  }
+  byId('codex-available').style.display = 'block';
+  byId('codex-unavailable').style.display = 'none';
+  setText('codex-plan', data.planType ? '(' + data.planType + ')' : '');
+  byId('codex-stale').style.display = data.stale ? 'inline' : 'none';
+  primary = data.primary || {};
+  secondary = data.secondary || {};
+  primaryPercent = asNumber(primary.remainingPercent, 0);
+  secondaryPercent = asNumber(secondary.remainingPercent, 0);
+  setText('codex-primary-pct', primaryPercent + '% 剩余');
+  setText('codex-secondary-pct', secondaryPercent + '% 剩余');
+  setText('codex-primary-reset', '重置时间 ' + (primary.resetTime || '--'));
+  setText('codex-secondary-reset', '重置时间 ' + (secondary.resetTime || '--'));
+  setBar('codex-primary-bar', primaryPercent);
+  setBar('codex-secondary-bar', secondaryPercent);
+  setText('codex-updated', data.lastUpdated || '--');
+}
+
+function renderDeepSeek(data) {
+  var balance;
+  var hasUsage;
+  if (!data) {
+    setText('ds-balance', '暂无数据');
+    return;
+  }
+  balance = asNumber(data.balance, 0);
+  hasUsage = asNumber(data.monthlyTokens, 0) > 0;
+  setText('ds-balance', '¥ ' + balance.toFixed(2));
+  setText('ds-updated', data.lastUpdated || '--');
+  setText('ds-model-label', '本月 ' + (data.monthlyModel || '用量'));
+  setText('ds-monthly-tokens', 'Token ' + formatTokens(data.monthlyTokens));
+  setText('ds-monthly-requests', asNumber(data.monthlyRequests, 0) + ' 次请求');
+  setText('ds-monthly-cost', '¥ ' + asNumber(data.monthlyCost, 0).toFixed(2));
+  setText('ds-monthly-updated', data.monthlyUpdated || '尚未获取');
+  byId('ds-login-hint').style.display = hasUsage ? 'none' : 'block';
+}
+
+function renderVPN(data) {
+  var used;
+  var total;
+  var remaining;
+  var usedPercent;
+  if (!data) {
+    setText('vpn-remaining', '暂无数据');
+    return;
+  }
+  used = asNumber(data.usedBandwidth, 0);
+  total = asNumber(data.totalBandwidth, 0);
+  remaining = asNumber(data.remainingBandwidth, 0);
+  usedPercent = total > 0 ? Math.round(used / total * 100) : 0;
+  setText('vpn-used', used.toFixed(1) + ' ' + (data.unit || 'GB'));
+  setText('vpn-remaining', remaining.toFixed(1) + ' ' + (data.unit || 'GB'));
+  setText('vpn-expiry', data.expiryDate || '--');
+  setBar('vpn-bar', usedPercent);
+}
+
+// ── actions ──
+
+function refreshAll() {
+  fetchDashboard();
+}
+
+function refreshUsage() {
+  var button = byId('btn-usage');
+  button.disabled = true;
+  setText('btn-usage', '刷新中');
+  requestJSON('POST', '/api/collect/usage', {}, function (error, data) {
+    button.disabled = false;
+    setText('btn-usage', '刷新用量');
+    if (error || !data || data.status !== 'ok') {
+      setStatus(
+        '用量刷新失败：' + (error ? error.message : data.message || '未知错误'),
+        'error'
+      );
+      return;
+    }
+    fetchDashboard();
+  });
+}
+
+function openLogin() {
+  requestJSON('POST', '/api/collect/usage/login', {}, function (error, data) {
+    if (error || !data || data.status !== 'ok') {
+      setStatus(
+        '打开登录失败：' + (error ? error.message : data.message || '未知错误'),
+        'error'
+      );
+      return;
+    }
+    setStatus('请在主机 Chrome 完成 DeepSeek 登录，然后刷新用量', 'ok');
+  });
+}
+
+// ── fullscreen ──
+
+function enterFullscreen() {
+  var root = document.documentElement;
+  var request = root.requestFullscreen ||
+    root.webkitRequestFullscreen ||
+    root.mozRequestFullScreen ||
+    root.msRequestFullscreen;
+  if (request) {
+    try {
+      request.call(root);
+      return;
+    } catch (error) {
+      byId('fullscreen-help').style.display = 'block';
+      return;
+    }
+  }
+  byId('fullscreen-help').style.display = 'block';
+}
+
+// ── debug ──
+
+function showDebugIfRequested() {
+  var query = window.location.search || '';
+  var debugPanel;
+  var lines;
+  if (query.indexOf('debug=1') === -1) {
+    return;
+  }
+  debugPanel = byId('debug-panel');
+  lines = [
+    'screen.width=' + screen.width,
+    'screen.height=' + screen.height,
+    'window.innerWidth=' + window.innerWidth,
+    'window.innerHeight=' + window.innerHeight,
+    'clientWidth=' + document.documentElement.clientWidth,
+    'clientHeight=' + document.documentElement.clientHeight,
+    'devicePixelRatio=' + (window.devicePixelRatio || 1),
+    'userAgent=' + navigator.userAgent
+  ];
+  debugPanel.style.display = 'block';
+  setText('debug-panel', lines.join('\n'));
+}
+
+// ── init ──
+
+function initializeDashboard() {
+  showDebugIfRequested();
+  fetchDashboard();
+  pollTimer = window.setInterval(fetchDashboard, 60000);
+}
+
+if (window.addEventListener) {
+  window.addEventListener('load', initializeDashboard, false);
+} else {
+  window.attachEvent('onload', initializeDashboard);
+}
+</script>
+</body>
+</html>
